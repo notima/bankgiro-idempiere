@@ -18,11 +18,12 @@ public class LbPayStatusCellRenderer extends DefaultTableCellRenderer {
 	 * 
 	 */
 	private static final long serialVersionUID = 5985383768346272946L;
-	public String[] m_payStatus = new String[] {
+    public String[] m_payStatus = new String[] {
         Msg.translate(Env.getCtx(), "All"),
         Msg.translate(Env.getCtx(), "Not.Paid"),
         Msg.translate(Env.getCtx(), "In.Transit"),
-        Msg.translate(Env.getCtx(), "Paid")
+        Msg.translate(Env.getCtx(), "Paid"),
+        Msg.translate(Env.getCtx(), "Not.Approved")
     };
 
     public LbPayStatusCellRenderer() {

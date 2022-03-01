@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+   
+   <extension
+         id="org.notima.bankgiro.adempiere.BGPaymentModelValidator"
+         name="BGPaymentModelValidator"
+         point="org.adempiere.base.ModelValidator">
+         <listener
+            class="org.notima.bankgiro.adempiere.BGPaymentModelValidator"
+            priority="0">
+      </listener>
+   </extension>
+   
+   <extension
+         id="org.notima.bankgiro.adempiere.BGInvoiceModelValidator"
+         name="BGInvoiceModelValidator"
+         point="org.adempiere.base.ModelValidator">
+		<listener
+            class="org.notima.bankgiro.adempiere.BGInvoiceModelValidator"
+            priority="1">
+        </listener>         
+   </extension>
+   
+   <extension
+         id="org.notima.bankgiro.adempiere.CalloutBgInvoiceSetPayDate"
+         name="BG Set Paydate"
+         point="org.adempiere.base.IColumnCallout">
+         <callout class="org.notima.bankgiro.adempiere.callout.CalloutBgInvoiceSetPayDate"
+         		  tableName="C_Invoice" columnName="C_PaymentTerm_ID">
+         </callout>
+   </extension>
+   
+   <extension
+         id="org.notima.bankgiro.adempiere.CalloutBgInvoiceCheckOCR"
+         name="BG Set Paydate"
+         point="org.adempiere.base.IColumnCallout">
+         <callout class="org.notima.bankgiro.adempiere.callout.CalloutBgInvoiceCheckOCR"
+         		  tableName="C_Invoice" columnName="IsOCR">
+         </callout>
+   </extension>
+   
+   <extension
+         id="org.notima.bankgiro.adempiere.process.SetupBankgiroIDempiere"
+         name="SetupBankgiroIDempiere"
+         point="org.adempiere.base.Process">
+         <process
+         	class="org.notima.bankgiro.adempiere.process.SetupBankgiroIDempiere">
+         </process>
+   </extension>
+   
+<!--   
+   <extension
+         id="org.adempiere.model.XX_CalloutInvoice"
+         name="BG Callout Invoice"
+         point="org.compiere.model.Callout">
+         <callout
+         	class="org.adempiere.model.XX_CalloutInvoice"
+         	prioriy="1">
+         </callout>
+   </extension>
+   <extension
+         id="org.adempiere.model.XX_CalloutBGPayment"
+         name="Callout BG Payment"
+         point="org.compiere.model.Callout">
+         <callout
+         	class="org.adempiere.model.XX_CalloutBGPayment"
+         	prioriy="2">
+         </callout>
+   </extension>
+-->
+
+
+</plugin>

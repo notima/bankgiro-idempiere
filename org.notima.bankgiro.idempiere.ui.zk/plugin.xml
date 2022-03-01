@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+
+   <extension
+         id="se.compiere.bg.VLBManagement"
+         name="VLBManagement"
+         point="org.adempiere.webui.Form">
+      <form
+            class="org.notima.bankgiro.idempiere.ui.zk.WLBManagement">
+      </form>
+   </extension>
+
+</plugin>
