@@ -383,9 +383,7 @@ public abstract class HeadlessPaymentPlugin {
 	 *            Subreport dir to save the reports
 	 * @param targetFileName
 	 *            The target file name to save
-	 * @param showInPdfReaderAfterSave
-	 *            If true, the PDF-reader associated with PDF-files open the
-	 *            newly created file.
+	 *            
 	 * @return Full path of created report.
 	 */
 	protected String createPaymentReport(String subReportDir, String targetFileName) {
@@ -428,7 +426,7 @@ public abstract class HeadlessPaymentPlugin {
 			}
 			File reportDir = new File(path + File.separator + subReportDir);
 			if (!reportDir.exists()) {
-				boolean result = reportDir.mkdirs();
+				reportDir.mkdirs();
 			}
 			String destFileName = reportDir + File.separator
 					+ targetFileName + ".pdf";

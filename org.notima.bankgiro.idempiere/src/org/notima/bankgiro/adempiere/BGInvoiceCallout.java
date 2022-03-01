@@ -1,15 +1,16 @@
 package org.notima.bankgiro.adempiere;
 
+import java.util.Iterator;
+import java.util.List;
 import java.util.Properties;
+import java.util.Vector;
 
-import org.compiere.model.*;
-import java.util.*;
-
-import javax.swing.JFrame;
-import javax.swing.JOptionPane;
-
+import org.compiere.model.CalloutEngine;
+import org.compiere.model.GridField;
+import org.compiere.model.GridTab;
+import org.compiere.model.MInvoice;
+import org.compiere.model.Query;
 import org.compiere.util.AdempiereSystemError;
-import org.compiere.util.Env;
 
 /**
  * Callout used by vendor invoices

@@ -220,7 +220,7 @@ public class BgPaymentPlugin extends PaymentPlugin {
     /**
      * Shows a report with payments
      * 
-     * @param payments
+     * @param process
      */
     public void showReceivablesPaymentReport(CreateReceivablesPayments process) {
     

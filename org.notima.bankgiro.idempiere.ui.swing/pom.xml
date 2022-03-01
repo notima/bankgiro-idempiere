@@ -3,6 +3,29 @@
   <groupId>org.notima</groupId>
   <artifactId>bankgiro-adempiere-swing</artifactId>
   <version>2.0.1</version>
+  <name>Bankgiro ADempiere / iDempiere Swing UI</name>
+
+  <description>UI to plugin to manage payments for Bankgirot</description>
+
+	<distributionManagement>
+		<snapshotRepository>
+			<id>ossrh</id>
+			<url>https://oss.sonatype.org/content/repositories/snapshots</url>
+		</snapshotRepository>
+	</distributionManagement>
+
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+	</properties>
+
+  <dependencies>
+  	<dependency>
+  		<groupId>org.notima</groupId>
+  		<artifactId>bankgiro-adempiere</artifactId>
+  		<version>2.0.1</version>
+  	</dependency>
+  </dependencies>
+
   <build>
     <sourceDirectory>src</sourceDirectory>
     <resources>
@@ -22,24 +45,99 @@
           <target>1.6</target>
         </configuration>
       </plugin>
+
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-source-plugin</artifactId>
+				<version>2.2.1</version>
+				<executions>
+					<execution>
+						<id>attach-sources</id>
+						<goals>
+							<goal>jar-no-fork</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-javadoc-plugin</artifactId>
         <version>2.9.1</version>
+				<executions>
+					<execution>
+						<id>attach-javadocs</id>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+					</execution>
+				</executions>
       </plugin>      
+
+			<plugin>
+				<groupId>org.sonatype.plugins</groupId>
+				<artifactId>nexus-staging-maven-plugin</artifactId>
+				<version>1.6.7</version>
+				<extensions>true</extensions>
+				<configuration>
+					<serverId>ossrh</serverId>
+					<nexusUrl>https://oss.sonatype.org/</nexusUrl>
+					<autoReleaseAfterClose>true</autoReleaseAfterClose>
+					<stagingProgressTimeoutMinutes>25</stagingProgressTimeoutMinutes>
+					<keepStagingRepositoryOnCloseRuleFailure>true</keepStagingRepositoryOnCloseRuleFailure>
+					<keepStagingRepositoryOnFailure>true</keepStagingRepositoryOnFailure>
+				</configuration>
+			</plugin>
+
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-gpg-plugin</artifactId>
+				<version>1.5</version>
+				<executions>
+					<execution>
+						<id>sign-artifacts</id>
+						<phase>verify</phase>
+						<goals>
+							<goal>sign</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+
     </plugins>
   </build>
-  <dependencies>
-  	<dependency>
-  		<groupId>org.notima</groupId>
-  		<artifactId>bankgiro-adempiere</artifactId>
-  		<version>2.0.1</version>
-  	</dependency>
-  </dependencies>
-  
-    <properties>
-  	<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-   </properties>
+
+	<licenses>
+		<license>
+			<name>Apache License, Version 2.0</name>
+			<url>https://www.apache.org/licenses/LICENSE-2.0.html</url>
+			<distribution>repo</distribution>
+		</license>
+	</licenses>
+
+	<url>https://github.com/notima/bankgiro-idempiere</url>
+	<organization>
+		<name>Notima System Integration AB</name>
+		<url>https://github.com/notima</url>
+	</organization>
+	<scm>
+		<url>https://github.com/notima/bankgiro-idempiere</url>
+		<connection>scm:git:git://github.com/notima/bankgiro-idempiere.git</connection>
+		<developerConnection>scm:git:https://github.com:notima/bankgiro-idempiere.git</developerConnection>
+	</scm>
+	<issueManagement>
+		<url>https://github.com/notima/bankgiro-idempiere/issues</url>
+		<system>GitHub</system>
+	</issueManagement>
+	
+	<developers>
+		<developer>
+			<name>Daniel Tamm</name>
+			<email>daniel@notima.se</email>
+			<organization>Notima System Integration AB</organization>
+			<organizationUrl>https://github.com/notima</organizationUrl>
+		</developer>
+	</developers>
   
   
 </project>

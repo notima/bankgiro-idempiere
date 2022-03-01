@@ -353,7 +353,6 @@ public abstract class PaymentFactory  implements Runnable {
 	 * @param ctx
 	 * @param currentPayment
 	 * @param trxName
-	 * @return
 	 */
 	protected void createFeePayments(Properties ctx, PaymentExtendedRecord currentPayment, String trxName) throws Exception {
 		
@@ -740,8 +739,8 @@ public abstract class PaymentFactory  implements Runnable {
 	/**
 	 * Method to lookup Invoice using OCR number
 	 * @param ctx
-	 * @param documentNo
-	 * @return
+	 * @param ocr
+	 * @return	The corresponding invoice
 	 * @throws Exception
 	 */
 	protected MInvoice lookupInvoiceOCR(Properties ctx, String ocr) throws Exception {
@@ -808,7 +807,8 @@ public abstract class PaymentFactory  implements Runnable {
 	/**
 	 * Method to lookup Invoice
 	 * @param ctx
-	 * @param bpDocumentNo
+	 * @param pExt
+	 * @param soTrx
 	 * @return
 	 * @throws Exception
 	 */
@@ -848,7 +848,8 @@ public abstract class PaymentFactory  implements Runnable {
 	/**
 	 * Method to lookup Invoice
 	 * @param ctx
-	 * @param bpDocumentNo
+	 * @param pExt
+	 * @param soTrx
 	 * @return
 	 * @throws Exception
 	 */

@@ -113,8 +113,6 @@ public class MessageCenter {
 	/**
 	 * Shows error message
 	 * 
-	 * @param c			The graphical component to "anchor" this message to.
-	 * @param title		Title of message box
 	 * @param message	Message
 	 */
 	public static void error(String message) {

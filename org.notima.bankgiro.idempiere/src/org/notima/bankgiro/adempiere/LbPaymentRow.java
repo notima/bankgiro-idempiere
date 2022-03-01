@@ -51,9 +51,7 @@ public class LbPaymentRow {
      * Sets paystatus "manually". Can't change from Paid to any other state. If
      * you want to change from paid you need to cancel the payment first.
      *
-     * @param row
      * @param status
-     * @throws java.lang.Exception
      */
     public void setPayStatus(int status) {
         if (payStatus==status) return;

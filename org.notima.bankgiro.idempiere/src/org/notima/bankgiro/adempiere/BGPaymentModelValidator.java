@@ -5,9 +5,12 @@
 
 package org.notima.bankgiro.adempiere;
 
-import org.compiere.model.*;
-import org.compiere.util.*;
-import java.util.*;
+import org.compiere.model.MClient;
+import org.compiere.model.MPayment;
+import org.compiere.model.ModelValidationEngine;
+import org.compiere.model.ModelValidator;
+import org.compiere.model.PO;
+import org.compiere.util.CLogger;
 
 /**
  *

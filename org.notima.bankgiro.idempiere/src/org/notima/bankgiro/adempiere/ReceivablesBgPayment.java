@@ -1,6 +1,5 @@
 package org.notima.bankgiro.adempiere;
 
-import org.compiere.model.*;
 import org.notima.bg.bgmax.BgMaxReceipt;
 
 

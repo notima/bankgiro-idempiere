@@ -5,12 +5,12 @@
 
 package org.notima.bankgiro.adempiere.form;
 
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
 
 import org.compiere.apps.form.FormFrame;
 import org.compiere.apps.form.FormPanel;
 import org.compiere.swing.CPanel;
-import org.notima.bankgiro.adempiere.form.*;
 
 /**
  *

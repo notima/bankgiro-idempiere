@@ -280,7 +280,7 @@ public class LbPaymentPlugin extends PaymentPlugin {
     /**
      * Shows a report with payments
      * 
-     * @param payments
+     * @param process
      */
     public void showPaymentReport(CreateLbPayments process) {
     

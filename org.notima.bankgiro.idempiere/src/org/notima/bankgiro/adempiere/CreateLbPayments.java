@@ -229,7 +229,7 @@ public class CreateLbPayments extends PaymentFactory {
 							payment.setDiscountAmt(new BigDecimal(new Double(pmtDiff).toString()));
 						}
 					}
-				} else {  // TODO: Remove temporary charge when done (Cyberphoto)
+				} else {  // TODO: Remove temporary charge when done 
 					payment.setC_Charge_ID(1000008);
 				}
 				payment.setIsApproved(true);

@@ -124,7 +124,7 @@ public class XX_CalloutInvoice extends CalloutEngine
 	 *		- C_PaymentTerm_ID
 	 *  @param ctx      Context
 	 *  @param WindowNo current Window No
-	 *  @param GridTab     Model Tab
+	 *  @param mTab     Model Tab
 	 *  @param mField   Model Field
 	 *  @param value    The new value
 	 */

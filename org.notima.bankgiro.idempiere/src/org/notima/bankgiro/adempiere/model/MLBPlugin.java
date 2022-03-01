@@ -5,7 +5,6 @@ import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
-import java.util.SortedMap;
 
 import org.compiere.model.Query;
 import org.compiere.util.Env;
@@ -77,9 +76,7 @@ public class MLBPlugin extends X_XC_LBPlugin {
 	 * Returns a headless plugin if one is available
 	 * 
 	 * @param ctx
-	 * @param bad			
 	 * @param trxName
-	 * @param settings
 	 * @return
 	 * @throws Exception
 	 */

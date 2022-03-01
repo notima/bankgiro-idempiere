@@ -5,14 +5,23 @@
 
 package org.notima.bankgiro.adempiere;
 
-import javax.swing.JOptionPane;
-import javax.swing.table.*;
-
 import java.beans.PropertyChangeSupport;
-import java.util.*;
-import org.compiere.model.*;
-import org.compiere.util.*;
-import org.notima.bg.BgUtil;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Vector;
+
+import javax.swing.JOptionPane;
+import javax.swing.table.AbstractTableModel;
+
+import org.compiere.model.MBPBankAccount;
+import org.compiere.model.MBPartner;
+import org.compiere.model.MCurrency;
+import org.compiere.model.MDocType;
+import org.compiere.model.MInvoice;
+import org.compiere.model.Query;
+import org.compiere.util.Env;
 
 
 /**

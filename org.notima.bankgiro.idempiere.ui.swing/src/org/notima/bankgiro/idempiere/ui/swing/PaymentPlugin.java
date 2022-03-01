@@ -30,8 +30,8 @@ import org.notima.bankgiro.adempiere.model.MLBSettings;
  * 
  * The plugin contains the following:
  * 
- * <li>A settings panel for any settings this plugin provides <i>getPanel()</i></li>
- * <li>Actions that this panel can do <i>getActions()</i></li>
+ * * A settings panel for any settings this plugin provides getPanel()
+ * * Actions that this panel can do getActions()
  * 
  * @author daniel.tamm
  *

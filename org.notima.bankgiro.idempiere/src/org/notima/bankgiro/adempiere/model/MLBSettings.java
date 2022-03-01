@@ -169,7 +169,6 @@ public class MLBSettings extends X_XC_LBSettings {
 
     /**
      * Fills a sorted map of settings for current user
-     * @return
      */
     public static void putSettings(SortedMap<String, MLBSettings> settings) {
         Properties ctx = Env.getCtx();
