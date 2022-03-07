@@ -1,0 +1,16 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: iso20022-swing
+Bundle-SymbolicName: iso20022-swing
+Bundle-Version: 1.0.0.qualifier
+Fragment-Host: org.notima.bankgiro.idempiere.ui.swing
+Eclipse-RegisterBuddy: org.notima.bankgiro.idempiere.ui.swing
+Export-Package: org.notima.idempiere.iso20022.ui.swing;
+  uses:="org.notima.bankgiro.adempiere,
+   org.notima.bankgiro.idempiere.ui.swing,
+   org.notima.bankgiro.adempiere.form,
+   javax.swing"
+Require-Bundle: org.adempiere.base;bundle-version="3.1.0",
+ org.notima.bankgiro.idempiere;bundle-version="2.0.0",
+ org.notima.bankgiro.idempiere.ui.swing;bundle-version="2.0.0",
+ iso20022;bundle-version="1.0.0"

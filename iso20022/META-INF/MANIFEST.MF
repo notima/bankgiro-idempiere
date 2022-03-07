@@ -1,0 +1,10 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: iso20022
+Bundle-SymbolicName: iso20022
+Bundle-Version: 1.0.0.qualifier
+Export-Package: org.notima.idempiere.iso20022,
+ org.notima.idempiere.iso20022.entity.camt,
+ org.notima.idempiere.iso20022.entity.pain
+Require-Bundle: org.notima.bankgiro.idempiere;bundle-version="2.0.0",
+ org.adempiere.base;bundle-version="3.1.0"

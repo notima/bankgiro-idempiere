@@ -1,0 +1,4 @@
+adempiere.db.server=localhost
+adempiere.db.database=database
+adempiere.db.user=user
+adempiere.db.pass=pass
