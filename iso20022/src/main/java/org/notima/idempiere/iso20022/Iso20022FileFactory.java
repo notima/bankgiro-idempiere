@@ -30,6 +30,8 @@ import org.notima.bankgiro.adempiere.PaymentValidator;
 import org.notima.bankgiro.adempiere.PluginRegistry;
 import org.notima.bankgiro.adempiere.model.MLBSettings;
 import org.notima.bg.BgUtil;
+import org.notima.idempiere.iso20022.entity.pain.ClearingSystemIdentification2Choice;
+import org.notima.idempiere.iso20022.entity.pain.ClearingSystemMemberIdentification2;
 import org.notima.idempiere.iso20022.entity.pain.AccountIdentification4Choice;
 import org.notima.idempiere.iso20022.entity.pain.AccountSchemeName1Choice;
 import org.notima.idempiere.iso20022.entity.pain.ActiveOrHistoricCurrencyAndAmount;
@@ -361,9 +363,23 @@ public class Iso20022FileFactory implements PaymentFileFactory {
 
 		BranchAndFinancialInstitutionIdentification4 bafiit = new BranchAndFinancialInstitutionIdentification4();
 		FinancialInstitutionIdentification7 fii = new FinancialInstitutionIdentification7();
-        String bic = dstBa.get_ValueAsString("swiftcode");
-        String iban = BgUtil.removeBlanks(dstBa.get_ValueAsString("iban"));
-		fii.setBIC(bic.toUpperCase());
+		
+		// P27 adjustments
+		BankAccountUtil bau = BankAccountUtil.buildFromMBPBankAccount(dstBa);		
+		
+		if (bau.getAccountType().equals(BankAccountUtil.BankAccountType.BANKGIRO) ||
+				bau.getAccountType().equals(BankAccountUtil.BankAccountType.PLUSGIRO)
+				) {
+			ClearingSystemMemberIdentification2 clrSys = new ClearingSystemMemberIdentification2(); 
+			ClearingSystemIdentification2Choice clrChoice = new ClearingSystemIdentification2Choice();
+			clrChoice.setCd("SESBA");
+			clrSys.setClrSysId(clrChoice);
+			clrSys.setMmbId("9900");
+			fii.setClrSysMmbId(clrSys);
+		} else {
+	        String bic = dstBa.get_ValueAsString("swiftcode");
+			fii.setBIC(bic.toUpperCase());
+		}
 		bafiit.setFinInstnId(fii);
 		
 		trx.setCdtrAgt(bafiit);
@@ -371,7 +387,8 @@ public class Iso20022FileFactory implements PaymentFileFactory {
         boolean isOCR = invoice.get_Value("isOCR")!=null && "true".equalsIgnoreCase(invoice.get_ValueAsString("isOCR"));
         String OCR = (String)invoice.get_Value("OCR"); 				    // OCR reference
         String BPInvoiceNo = (String)invoice.get_Value("BPDocumentNo");		// Invoice number if not OCR
-
+        String iban = BgUtil.removeBlanks(dstBa.get_ValueAsString("iban"));
+        
         RemittanceInformation5 rmt = new RemittanceInformation5();
         if (isOCR) {
         	StructuredRemittanceInformation7 ocr = new StructuredRemittanceInformation7();
