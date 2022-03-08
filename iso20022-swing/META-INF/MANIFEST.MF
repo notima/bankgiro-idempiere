@@ -3,8 +3,8 @@ Bundle-ManifestVersion: 2
 Bundle-Name: iso20022-swing
 Bundle-SymbolicName: iso20022-swing
 Bundle-Version: 1.0.0.qualifier
-Fragment-Host: bankgiro-adempiere-swing
-Eclipse-RegisterBuddy: bankgiro-adempiere-swing
+Fragment-Host: org.notima.bankgiro.idempiere.ui.swing
+Eclipse-RegisterBuddy: org.notima.bankgiro.idempiere.ui.swing
 Export-Package: org.notima.idempiere.iso20022.ui.swing;
   uses:="org.notima.bankgiro.adempiere,
    org.notima.bankgiro.idempiere.ui.swing,
