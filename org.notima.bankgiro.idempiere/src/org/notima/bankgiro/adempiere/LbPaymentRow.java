@@ -29,6 +29,7 @@ public class LbPaymentRow {
     public static final int PAYSTATUS_NOTPAID = 1;
     public static final int PAYSTATUS_INTRANSIT = 2;
     public static final int PAYSTATUS_PAID = 3;
+    public static final int PAYSTATUS_NOT_APPROVED = 4;
 
     public boolean      selected;
     public int          payStatus;

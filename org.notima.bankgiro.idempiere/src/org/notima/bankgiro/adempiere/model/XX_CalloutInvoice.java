@@ -26,6 +26,7 @@ import org.compiere.model.MInvoice;
 import org.compiere.model.MPaymentTerm;
 import org.compiere.model.Query;
 import org.notima.bankgiro.adempiere.BankAccountUtil;
+import org.notima.bg.BgUtil;
 
 
 /**
@@ -173,5 +174,51 @@ public class XX_CalloutInvoice extends CalloutEngine
         
 		return "";
 	}	//	bPartner
+	
+	
+	/**
+	 * 
+	 * 
+	 * @param ctx
+	 * @param WindowNo
+	 * @param mTab
+	 * @param mField		should be the isOCR check
+	 * @param value
+	 * @return
+	 */
+	public String checkOcr(Properties ctx, int WindowNo, GridTab mTab, GridField mField, Object value) {
+		
+		if (!"IsOCR".equalsIgnoreCase(mField.getColumnName()) || value==null)
+			return "";
+		
+		Boolean v = Boolean.FALSE;
+		
+		if (value instanceof Boolean) {
+				v = (Boolean)value;
+		} 
+		if (value instanceof String) {
+			v = "Y".equalsIgnoreCase(value.toString());
+		}
+		
+		GridField f = mTab.getField("BPDocumentNo");
+		if (f==null) return ""; 
+		
+		GridField isSo = mTab.getField("IsSOTrx");
+		String bpDocumentNo = f.getValue()!=null ? f.getValue().toString() : null;
+		GridField f2 = mTab.getField("OCR");
+		boolean soTrx = isSo.getValue()!=null ? "Y".equals(isSo.toString()) : false;
+		String ocr = f2.getValue()!=null ? f2.getValue().toString() : null;
+		if (soTrx) {
+		} else {
+			if (v.booleanValue() && bpDocumentNo!=null && (ocr==null || ocr.trim().length()==0)) {
+				if (BgUtil.isValidOCRNumber(bpDocumentNo)) {
+					mTab.setValue("OCR", bpDocumentNo);
+				}
+			}
+		}
+		
+		return "";
+		// check OCR
+	}	
 	
 }	//	CalloutInvoice

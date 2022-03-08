@@ -1,0 +1,13 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: bankgiro-adempiere-swing
+Bundle-SymbolicName: bankgiro-adempiere-swing
+Bundle-Version: 1.0.0.qualifier
+Export-Package: org.notima.bankgiro.adempiere.form,
+ org.notima.bankgiro.idempiere.ui.swing
+Require-Bundle: org.adempiere.base;bundle-version="3.1.0",
+ org.adempiere.ui.swing;bundle-version="3.1.0",
+ org.notima.bankgiro.idempiere;bundle-version="2.0.0",
+ org.adempiere.ui;bundle-version="3.1.0",
+ org.adempiere.report.jasper.library;bundle-version="3.1.0",
+ org.adempiere.report.jasper.swing;bundle-version="3.1.0"
