@@ -349,6 +349,8 @@ public class Iso20022FileFactory implements PaymentFileFactory {
 		trx.setAmt(amt);
 
 		trx.setCdtr(convert(lpr.getBpartner()));
+
+		// Set recipient account
 		
 		MBPBankAccount dstBa = lpr.getDstAccount();
 		ca = new CashAccount16();
@@ -358,36 +360,21 @@ public class Iso20022FileFactory implements PaymentFileFactory {
 			throw new Exception(lpr.getBpartner().getName() + " : " + e.getMessage());
 		}
 		ca.setCcy(lpr.currency);
-		
 		trx.setCdtrAcct(ca);
-
-		BranchAndFinancialInstitutionIdentification4 bafiit = new BranchAndFinancialInstitutionIdentification4();
-		FinancialInstitutionIdentification7 fii = new FinancialInstitutionIdentification7();
 		
-		// P27 adjustments
+		// Set credit agent
+		
 		BankAccountUtil bau = BankAccountUtil.buildFromMBPBankAccount(dstBa);		
-		
-		if (bau.getAccountType().equals(BankAccountUtil.BankAccountType.BANKGIRO) ||
-				bau.getAccountType().equals(BankAccountUtil.BankAccountType.PLUSGIRO)
-				) {
-			ClearingSystemMemberIdentification2 clrSys = new ClearingSystemMemberIdentification2(); 
-			ClearingSystemIdentification2Choice clrChoice = new ClearingSystemIdentification2Choice();
-			clrChoice.setCd("SESBA");
-			clrSys.setClrSysId(clrChoice);
-			clrSys.setMmbId("9900");
-			fii.setClrSysMmbId(clrSys);
-		} else {
-	        String bic = dstBa.get_ValueAsString("swiftcode");
-			fii.setBIC(bic.toUpperCase());
-		}
-		bafiit.setFinInstnId(fii);
+
+		BranchAndFinancialInstitutionIdentification4 bafiit = Iso20022Helper.getCreditorAgent(bau);
 		
 		trx.setCdtrAgt(bafiit);
+
+		// Set remittance information
 		
         boolean isOCR = invoice.get_Value("isOCR")!=null && "true".equalsIgnoreCase(invoice.get_ValueAsString("isOCR"));
         String OCR = (String)invoice.get_Value("OCR"); 				    // OCR reference
         String BPInvoiceNo = (String)invoice.get_Value("BPDocumentNo");		// Invoice number if not OCR
-        String iban = BgUtil.removeBlanks(dstBa.get_ValueAsString("iban"));
         
         RemittanceInformation5 rmt = new RemittanceInformation5();
         if (isOCR) {
@@ -395,15 +382,16 @@ public class Iso20022FileFactory implements PaymentFileFactory {
         	CreditorReferenceInformation2 cri = new CreditorReferenceInformation2();
         	cri.setRef(OCR);
         	ocr.setCdtrRefInf(cri);
-        	if ("NO".equals(countryCodeSrcAccount) && iban.startsWith("NO")) {
-	        	CreditorReferenceType2 tp = new CreditorReferenceType2();
-	        	cri.setTp(tp);
-	        	CreditorReferenceType1Choice cdor = new CreditorReferenceType1Choice();
-	        	tp.setCdOrPrtry(cdor);
-	        	cdor.setCd(DocumentType3Code.SCOR);
-        	}
+        	
+        	CreditorReferenceType2 tp = new CreditorReferenceType2();
+        	cri.setTp(tp);
+        	CreditorReferenceType1Choice cdor = new CreditorReferenceType1Choice();
+        	tp.setCdOrPrtry(cdor);
+        	cdor.setCd(DocumentType3Code.SCOR);
+        	
         	rmt.getStrd().add(ocr);
         } else {
+        	// User message
 	        List<String> ocrList = rmt.getUstrd();
 	        ocrList.add(BPInvoiceNo);
         }
@@ -480,9 +468,11 @@ public class Iso20022FileFactory implements PaymentFileFactory {
         	return result;
         }
         
-        if (bau.getAccountType().equals(BankAccountUtil.BankAccountType.PLUSGIRO)) {
+        if (bau.getAccountType().equals(BankAccountUtil.BankAccountType.PLUSGIRO) ||
+        		bau.getAccountType().equals(BankAccountUtil.BankAccountType.DOMESTIC_BANKACCT)
+        		) {
         	other.setId(BgUtil.toDigitsOnly(bau.getDstAcct()));
-        	ascheme.setCd("PGNR");
+        	ascheme.setCd("BBAN");
         	other.setSchmeNm(ascheme);
         	result.setOthr(other);
         }

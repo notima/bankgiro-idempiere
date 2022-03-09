@@ -21,8 +21,8 @@ public class PainPaymentValidator extends BasicPaymentValidator {
 			return "Recipient bank account must be defined.";
 		}
 
-		if (bau.getAccountType().equals(BankAccountUtil.BankAccountType.DOMESTIC_BANKACCT)) {
-			return "Domestic bank transfer not yet supported";
+		if (bau.getAccountType().equals(BankAccountUtil.BankAccountType.SEPA)) {
+			return "SEPA not yet supported";
 		}
 		
         // Check for credit notes (not yet supported)
