@@ -10,6 +10,8 @@ public class BankAccountUtil {
 		PLUSGIRO,
 		DOMESTIC_BANKACCT,
 		IBAN,
+		SEPA,
+		CHECK,
 		NONE
 	}
 	
