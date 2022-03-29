@@ -73,6 +73,7 @@ public abstract class PaymentFactory  implements Runnable {
 	protected boolean		m_dryRun = false;
 	// The id of the unknown BPartner used for unidentified payments.
 	protected int			m_unknownBPartnerId;
+	protected MBPartner		m_unknownBPartner;
 	// Logger
 	protected CLogger		m_log = CLogger.getCLogger(this.getClass());
 	// LB Settings
@@ -736,6 +737,16 @@ public abstract class PaymentFactory  implements Runnable {
 		return(m_ourBa);
 	}
 
+	protected MBPartner lookupUnidentifiedBPartner() throws Exception {
+		
+		if (m_unknownBPartner==null || m_unknownBPartnerId!=m_unknownBPartner.get_ID()) {
+			m_unknownBPartner = MBPartner.get(m_ctx, m_unknownBPartnerId);
+		}
+		
+		return m_unknownBPartner;
+		
+	}
+	
 	/**
 	 * Method to lookup Invoice using OCR number
 	 * @param ctx
