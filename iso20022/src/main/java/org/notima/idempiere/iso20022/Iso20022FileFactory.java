@@ -83,8 +83,13 @@ public class Iso20022FileFactory implements PaymentFileFactory {
 	
 	public static DateFormat	df = new SimpleDateFormat("yyyy-MM-dd");
 
+	// Source bank account
 	private MBankAccount 		ba;
+	// Source payments
 	private List<LbPaymentRow>	payments;
+	// Destination payments in ISO / PAIN format.
+	private List<PaymentInstructionInformation3> dstPaymentList;
+	
 	private SortedMap<String, MLBSettings> lbSettings;
 	
 	private MLBSettings 		msgPrefix;
@@ -181,6 +186,9 @@ public class Iso20022FileFactory implements PaymentFileFactory {
 		return currentMsgId;
 	}
 	
+	/**
+	 * Creates an outbound payment file with outbound payments (PAIN format).
+	 */
 	@Override
 	public File createPaymentFile(MBankAccount srcAccount,
 			List<LbPaymentRow> suggestedPayments, File outDir, String trxName) {
@@ -203,21 +211,26 @@ public class Iso20022FileFactory implements PaymentFileFactory {
 			MessageCenter.error("Can't get message ID for next file. Please check system settings");
 			return null;
 		}
+
 		// Date of file
+		// CreDtTm
 		XMLGregorianCalendar xcal;
 		xcal = dataTypeFactory.newXMLGregorianCalendar((GregorianCalendar)Calendar.getInstance());
+
+		
 		groupHeader.setCreDtTm(xcal);
 		
 		// Number of transactions
+		// NbOfTxs
 		groupHeader.setNbOfTxs(Integer.toString(payments.size()));
-
+		
 		// Initiator name
 		// InitgPty / Nm
 		MOrg info = MOrg.get(ctx, ba.getAD_Org_ID());
 		PartyIdentification32 sender = new PartyIdentification32();
 		sender.setNm(info.getName());
 		groupHeader.setInitgPty(sender);
-
+		
 		// Forward agent
 		BranchAndFinancialInstitutionIdentification4 bafii = new BranchAndFinancialInstitutionIdentification4();
 		FinancialInstitutionIdentification7 fii = new FinancialInstitutionIdentification7();
@@ -230,20 +243,23 @@ public class Iso20022FileFactory implements PaymentFileFactory {
 		bafii.setFinInstnId(fii);
 		
 		groupHeader.setFwdgAgt(bafii);
-
-		// Add payment info
-		List<PaymentInstructionInformation3> paymentList = init.getPmtInf();
-		PaymentInstructionInformation3 pmt;
 		
         countryCodeSrcAccount = ba.getIBAN().substring(0, 2).toUpperCase();
 		
 		currentPaymentId = 1;
 		
+		// Add payment info
+		dstPaymentList = init.getPmtInf();
+		PaymentInstructionInformation3 pmt;
+		
 		try {
-			for (LbPaymentRow lpr : payments) {
-	
-				pmt = convert(bafii, sender, countryCodeSrcAccount, lpr);
-				paymentList.add(pmt);
+			
+			LbPaymentBPartnerMap paymentBuckets = new LbPaymentBPartnerMap(payments);
+			
+			for (LbPaymentBucket bucket : paymentBuckets.getBuckets()) {
+				
+				pmt = convert(bafii, sender, countryCodeSrcAccount, bucket.getLbPaymentRows());
+				dstPaymentList.add(pmt);
 				currentPaymentId++;
 				
 			}
@@ -283,12 +299,25 @@ public class Iso20022FileFactory implements PaymentFileFactory {
 		return outFile;
 	}
 
+	/**
+	 * Converts a LbPaymentRow to an equivalent PaymentInstruction. Note, all rows should have the same recipient and 
+	 * pay date.
+	 * 
+	 * @param bafii
+	 * @param debtor
+	 * @param countryCodeSrcAccount
+	 * @param lpr
+	 * @return
+	 * @throws Exception
+	 */
 	private PaymentInstructionInformation3 convert(
 			BranchAndFinancialInstitutionIdentification4 bafii,
 			PartyIdentification32 debtor, 
 			String countryCodeSrcAccount,
-			LbPaymentRow lpr) throws Exception {
+			List<LbPaymentRow> lprs) throws Exception {
 
+		LbPaymentRow firstLpr = lprs.get(0);
+		
 		PaymentInstructionInformation3 pmt = new PaymentInstructionInformation3();
 		pmt.setPmtInfId(Integer.toString(currentPaymentId));
 		
@@ -298,12 +327,10 @@ public class Iso20022FileFactory implements PaymentFileFactory {
 		// Payment Tp Inf
 		PaymentTypeInformation19 pmtTpInf = new PaymentTypeInformation19();
 		pmtTpInf.setInstrPrty(Priority2Code.NORM); // Always Normal
-		
 		// Service level
 		ServiceLevel8Choice serviceLevel = new ServiceLevel8Choice();
 		serviceLevel.setCd("NURG"); // Non-urgent
 		pmtTpInf.setSvcLvl(serviceLevel);
-		
 		// Category Purpose
 		CategoryPurpose1Choice ctgyPurp = new CategoryPurpose1Choice();
 		ctgyPurp.setCd("SUPP"); // Always supplier payment
@@ -325,7 +352,7 @@ public class Iso20022FileFactory implements PaymentFileFactory {
 		
 		XMLGregorianCalendar xcal;
 		GregorianCalendar cal = (GregorianCalendar)Calendar.getInstance();
-		cal.setTimeInMillis(lpr.payDate.getTime());
+		cal.setTimeInMillis(firstLpr.payDate.getTime());
 		xcal = dataTypeFactory.newXMLGregorianCalendar(cal);
 		pmt.setReqdExctnDt(xcal);
 		
@@ -337,7 +364,7 @@ public class Iso20022FileFactory implements PaymentFileFactory {
 		
 		// PmtId (their reference id)
 		PaymentIdentification1 payId = new PaymentIdentification1();
-		MInvoice invoice = lpr.getInvoice();
+		MInvoice invoice = firstLpr.getInvoice();
 		
 		payId.setEndToEndId(invoice.getDocumentNo());
 		
@@ -346,42 +373,43 @@ public class Iso20022FileFactory implements PaymentFileFactory {
 		// Amt
 		AmountType3Choice amt = new AmountType3Choice();
 		ActiveOrHistoricCurrencyAndAmount amtCur = new ActiveOrHistoricCurrencyAndAmount();
-		amtCur.setCcy(lpr.currency);
-		amtCur.setValue(BigDecimal.valueOf(lpr.payAmount));
+		amtCur.setCcy(firstLpr.currency);
+		amtCur.setValue(Iso20022Helper.calculatePayAmount(lprs));
 		amt.setInstdAmt(amtCur);
 		trx.setAmt(amt);
+		
+		if (amtCur.getValue().signum()<0) {
+			throw new Exception("Total amount to pay must not be negative for " + firstLpr.getBpartner().getName());
+		}
 
 		// Set recipient account
 		
-		MBPBankAccount dstBa = lpr.getDstAccount();
+		MBPBankAccount dstBa = firstLpr.getDstAccount();
 		ca = new CashAccount16();
 		try {
 			ca.setId(convert(countryCodeSrcAccount, dstBa));
 		} catch (Exception e) {
-			throw new Exception(lpr.getBpartner().getName() + " : " + e.getMessage());
+			throw new Exception(firstLpr.getBpartner().getName() + " : " + e.getMessage());
 		}
-		ca.setCcy(lpr.currency);
+		ca.setCcy(firstLpr.currency);
 		trx.setCdtrAcct(ca);
 		
 		// Set credit agent
 		
-		BankAccountUtil bau = BankAccountUtil.buildFromMBPBankAccount(dstBa);		
+		BankAccountUtil bau = BankAccountUtil.buildFromMBPBankAccount(dstBa);	
 
-		MLocation loc = getRemitToLocation(lpr.getBpartner());
+		MLocation loc = getRemitToLocation(firstLpr.getBpartner());
 		
 		boolean crossCountry = loc!=null && !countryCodeSrcAccount.equalsIgnoreCase(loc.getCountry().getCountryCode());
 		
-		String iban = bau.getIban();
-		if (iban!=null && !iban.startsWith(countryCodeSrcAccount)) {
+		if (bau.getAccountType() == BankAccountUtil.BankAccountType.IBAN) {
 			crossCountry = true;
-		}
-		
-		// Check if IBAN and EUR
-		if (bau.getAccountType() == BankAccountUtil.BankAccountType.IBAN && "EUR".equalsIgnoreCase(lpr.currency)) {
-			serviceLevel.setCd("SEPA");
+			if ("EUR".equalsIgnoreCase(firstLpr.currency)) {
+				serviceLevel.setCd("SEPA");
+			}
 		}
 
-		trx.setCdtr(convert(lpr.getBpartner(), crossCountry));
+		trx.setCdtr(convert(firstLpr.getBpartner(), crossCountry));
 		
 		if (crossCountry) {
 			// Share charges
@@ -396,43 +424,18 @@ public class Iso20022FileFactory implements PaymentFileFactory {
 			trx.getRgltryRptg().add(rr);
 		}
 		
+		BranchAndFinancialInstitutionIdentification4 destinationFinInstitution = Iso20022Helper.getCreditorAgent(bau);
 		
-		BranchAndFinancialInstitutionIdentification4 bafiit = Iso20022Helper.getCreditorAgent(bau);
-		
-		trx.setCdtrAgt(bafiit);
+		trx.setCdtrAgt(destinationFinInstitution);
 
 		// Set remittance information
-		
-        boolean isOCR = invoice.get_Value("isOCR")!=null && "true".equalsIgnoreCase(invoice.get_ValueAsString("isOCR"));
-        String OCR = (String)invoice.get_Value("OCR"); 				    // OCR reference
-        String BPInvoiceNo = (String)invoice.get_Value("BPDocumentNo");		// Invoice number if not OCR
-        
-        RemittanceInformation5 rmt = new RemittanceInformation5();
-        if (isOCR) {
-        	StructuredRemittanceInformation7 ocr = new StructuredRemittanceInformation7();
-        	CreditorReferenceInformation2 cri = new CreditorReferenceInformation2();
-        	cri.setRef(OCR);
-        	ocr.setCdtrRefInf(cri);
-        	
-        	CreditorReferenceType2 tp = new CreditorReferenceType2();
-        	cri.setTp(tp);
-        	CreditorReferenceType1Choice cdor = new CreditorReferenceType1Choice();
-        	tp.setCdOrPrtry(cdor);
-        	cdor.setCd(DocumentType3Code.SCOR);
-        	
-        	rmt.getStrd().add(ocr);
-        } else {
-        	// User message
-	        List<String> ocrList = rmt.getUstrd();
-	        ocrList.add(BPInvoiceNo);
-        }
-        
-        trx.setRmtInf(rmt);
+		trx.setRmtInf(Iso20022Helper.createRemittanceInformation(lprs));
 
 		List<CreditTransferTransactionInformation10> trxList = pmt.getCdtTrfTxInf();
 		trxList.add(trx);
         
 		return pmt;
+		
 	}
 
 	private AccountIdentification4Choice convert(MBankAccount senderBankAccount) throws Exception {
@@ -472,7 +475,7 @@ public class Iso20022FileFactory implements PaymentFileFactory {
     	AccountSchemeName1Choice ascheme = new AccountSchemeName1Choice();
         
         if (iban!=null && iban.trim().length()>0) {
-	        if (iban.startsWith(countryCode)) {
+	        if (iban.startsWith(countryCode) && bau.getAccountNo()!=null && bau.getAccountNo().trim().length()>0) {
 	        	String routingNo = receiverBankAccount.getRoutingNo();
 	        	String accountNo = receiverBankAccount.getAccountNo();
 	        	// Norway
@@ -513,8 +516,6 @@ public class Iso20022FileFactory implements PaymentFileFactory {
         	other.setSchmeNm(ascheme);
         	result.setOthr(other);
         }
-        
-        // TODO: Handle payment to domestic bank account
         
         return result;
 		
@@ -572,7 +573,7 @@ public class Iso20022FileFactory implements PaymentFileFactory {
 		return loc;
 		
 	}
-
+	
 	/**
 	 * Returns payment validator for PAIN payments.
 	 */

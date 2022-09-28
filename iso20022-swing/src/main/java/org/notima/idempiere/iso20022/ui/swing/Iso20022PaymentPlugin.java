@@ -17,10 +17,8 @@ import javax.swing.Action;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 
-import net.sf.jasperreports.engine.JasperFillManager;
-import net.sf.jasperreports.engine.JasperPrint;
-import net.sf.jasperreports.engine.data.JRBeanCollectionDataSource;
-
+import org.adempiere.base.Service;
+import org.adempiere.report.jasper.JRViewerProvider;
 import org.compiere.model.MBankAccount;
 import org.compiere.util.Env;
 import org.notima.bankgiro.adempiere.LbPaymentRow;
@@ -40,13 +38,25 @@ import org.notima.idempiere.iso20022.Iso20022HeadlessPlugin;
 import org.notima.idempiere.iso20022.Iso20022PaymentFactory;
 import org.notima.idempiere.iso20022.Iso20022Settings;
 
+import net.sf.jasperreports.engine.JasperFillManager;
+import net.sf.jasperreports.engine.JasperPrint;
+import net.sf.jasperreports.engine.data.JRBeanCollectionDataSource;
+
 public class Iso20022PaymentPlugin extends PaymentPlugin {
 
+	private org.adempiere.report.jasper.JRViewerProvider jrViewer;
+	
 	private Action			m_actionCreateFile;
 	private Action			m_actionReadFile;
 	private Action			m_actionReadReceivables;
 	
 	private I_LBSettingsPanel	m_panel;
+	
+	private void lookupJrViewer() {
+	
+		jrViewer = Service.locator().locate(JRViewerProvider.class).getService();
+		
+	}
 	
 	public Iso20022PaymentPlugin(Properties ctx, VLBManagementPanel frame)
 			throws Exception {
@@ -333,7 +343,8 @@ public class Iso20022PaymentPlugin extends PaymentPlugin {
 				}
 				
 			} else {
-				org.compiere.report.JasperViewer.viewReport(print);
+				lookupJrViewer();
+				jrViewer.openViewer(print, "Payment report");
 			}
 			
 		} catch (Exception jre) {

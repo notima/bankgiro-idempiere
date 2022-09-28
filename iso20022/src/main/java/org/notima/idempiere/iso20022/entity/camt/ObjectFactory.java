@@ -97,11 +97,11 @@ public class ObjectFactory {
     }
 
     /**
-     * Create an instance of {@link Document }
+     * Create an instance of {@link DocumentCAMT53 }
      * 
      */
-    public Document createDocument() {
-        return new Document();
+    public DocumentCAMT53 createDocument() {
+        return new DocumentCAMT53();
     }
 
     /**
@@ -929,12 +929,12 @@ public class ObjectFactory {
     }
 
     /**
-     * Create an instance of {@link JAXBElement }{@code <}{@link Document }{@code >}}
+     * Create an instance of {@link JAXBElement }{@code <}{@link DocumentCAMT53 }{@code >}}
      * 
      */
     @XmlElementDecl(namespace = "urn:iso:std:iso:20022:tech:xsd:camt.053.001.02", name = "Document")
-    public JAXBElement<Document> createDocument(Document value) {
-        return new JAXBElement<Document>(_Document_QNAME, Document.class, null, value);
+    public JAXBElement<DocumentCAMT53> createDocument(DocumentCAMT53 value) {
+        return new JAXBElement<DocumentCAMT53>(_Document_QNAME, DocumentCAMT53.class, null, value);
     }
 
 }

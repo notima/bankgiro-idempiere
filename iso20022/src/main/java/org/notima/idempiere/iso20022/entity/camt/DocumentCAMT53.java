@@ -39,7 +39,7 @@ import javax.xml.bind.annotation.XmlType;
 @XmlType(name = "Document", propOrder = {
     "bkToCstmrStmt"
 })
-public class Document {
+public class DocumentCAMT53 {
 
     @XmlElement(name = "BkToCstmrStmt", required = true)
     protected BankToCustomerStatementV02 bkToCstmrStmt;
