@@ -44,6 +44,7 @@ import iso.std.iso._20022.tech.xsd.camt_054_001.GenericAccountIdentification1;
 import iso.std.iso._20022.tech.xsd.camt_054_001.PartyIdentification32;
 import iso.std.iso._20022.tech.xsd.camt_054_001.ProprietaryReference1;
 import iso.std.iso._20022.tech.xsd.camt_054_001.ReportEntry2;
+import iso.std.iso._20022.tech.xsd.camt_054_001.StructuredRemittanceInformation7;
 import iso.std.iso._20022.tech.xsd.camt_054_001.TransactionParty2;
 import iso.std.iso._20022.tech.xsd.camt_054_001.TransactionReferences2;
 
@@ -180,6 +181,62 @@ public class CAMT54PaymentFactory {
 		
 	}
 	
+	private void setAmountFromTransaction(PaymentExtendedRecord rec, EntryTransaction2 ee) {
+		
+		AmountAndCurrencyExchange3 aace = ee.getAmtDtls();
+		AmountAndCurrencyExchangeDetails3 aaced = aace
+				.getTxAmt();
+		ActiveOrHistoricCurrencyAndAmount amount = aaced
+				.getAmt();
+		
+		rec.setCurrency(amount.getCcy());
+		rec.setOrderSum(amount.getValue().doubleValue());
+		
+	}
+	
+	/**
+	 * Sets the invoice reference in the PaymentExtendedRecord from EntryTransaction.
+	 * 
+	 * If OCR the paymentReferenceField is used, otherwise invoiceNo.
+	 * 
+	 * @param rec
+	 * @param ee
+	 */
+	private void setInvoiceReferenceFromTransaction(PaymentExtendedRecord rec, EntryTransaction2 ee) {
+		
+		TransactionReferences2 tr2 = ee.getRefs();
+
+		// Get our invoice no
+		String ourRef = tr2.getEndToEndId();
+		ProprietaryReference1 theirRef1 = tr2.getPrtry();
+		if (theirRef1!=null) {
+			String theirRef = theirRef1.getRef();
+			rec.setBpInvoiceNo(theirRef);
+		}
+		
+		if (ourRef==null) {
+			// Look in structured remittance information
+			if (ee.getRmtInf()!=null) {
+				List<StructuredRemittanceInformation7> remittanceList = ee.getRmtInf().getStrd();
+				// TODO: Allow for handling of more than one invoice in remittance list.
+				for (StructuredRemittanceInformation7 r : remittanceList) {
+					if (isOCRReference(r)) {
+						rec.setPaymentReference(r.getCdtrRefInf().getRef());
+						rec.setInvoiceNo(rec.getPaymentReference().substring(0, rec.getPaymentReference().length()-1));
+						break;
+					} else {
+						rec.setInvoiceNo(r.getCdtrRefInf().getRef());
+						break;
+					}
+				}
+			}
+		} else {
+			rec.setInvoiceNo(ourRef);
+		}
+		
+	}
+	
+	
 	
 	private void processEntryTransaction(EntryTransaction2 ee) {
 		
@@ -191,45 +248,31 @@ public class CAMT54PaymentFactory {
 		PaymentExtendedRecord rec = new PaymentExtendedRecord();
 		rec.setBankAccountPtr(ba);
 		
-		TransactionReferences2 tr2 = ee.getRefs();
-
-		// Get our invoice no
-		ourRef = tr2.getEndToEndId();
-		ProprietaryReference1 theirRef1 = tr2.getPrtry();
-		if (theirRef1!=null) {
-			String theirRef = theirRef1.getRef();
-			rec.setBpInvoiceNo(theirRef);
-		}
+		setInvoiceReferenceFromTransaction(rec, ee);
 
 		// Check invoice
 		MInvoice invoice = new Query(
 				Env.getCtx(),
 				MInvoice.Table_Name,
-				"AD_Client_ID=? AND DocumentNo=? AND PaymentRule='Z'",
+				"AD_Client_ID=? AND DocumentNo=? AND IsSoTrx='Y'",
 				trxName).setParameters(
 				new Object[] {
 						Env.getAD_Client_ID(Env.getCtx()),
-						ourRef }).firstOnly();
+						rec.getInvoiceNo() }).firstOnly();
 
 		if (invoice != null) {
 			rec.setInvoice(invoice);
 			rec.setBPartner(new MBPartner(Env.getCtx(),
 					invoice.getC_BPartner_ID(), trxName));
 		} else {
-			Log.warn("Can't match invoice " + ourRef);
+			Log.warn("Can't match invoice " + rec.getInvoiceNo());
 		}
 
-		AmountAndCurrencyExchange3 aace = ee.getAmtDtls();
-		AmountAndCurrencyExchangeDetails3 aaced = aace
-				.getTxAmt();
-		ActiveOrHistoricCurrencyAndAmount amount = aaced
-				.getAmt();
+		setAmountFromTransaction(rec, ee);		
 
-		rec.setInvoiceNo(ourRef);
-		rec.setDescription(ourRef);
-		rec.setCurrency(amount.getCcy());
-		rec.setOrderSum(amount.getValue().doubleValue());
+		rec.setDescription(rec.getInvoiceNo());
 		rec.setTransaction(lbPayment);
+		
 		lbPayment.setAmount(rec.getOrderSum());
 		rec.setTrxDate(dte.getDt().toGregorianCalendar()
 				.getTime());
@@ -238,7 +281,7 @@ public class CAMT54PaymentFactory {
 		paymentFactory.setTrxDate(rec.getTrxDate());
 
 		TransactionParty2 trp = ee.getRltdPties();
-		PartyIdentification32 pid = trp.getCdtr();
+		PartyIdentification32 pid = trp.getDbtr();
 		if (pid!=null) {
 			rec.setName(pid.getNm());
 			lbPayment.setDstName(pid.getNm());
@@ -274,7 +317,7 @@ public class CAMT54PaymentFactory {
 			try {
 				MPayment pmt = paymentFactory.createPayment(ba, invoice,
 						rec.getTrxDate(), false, rec.getOrderSum(),
-						amount.getCcy(), trxName);
+						rec.getCurrency(), trxName);
 
 				rec.setAdempierePayment(pmt);
 			} catch (AdempiereException ae) {
@@ -338,5 +381,16 @@ public class CAMT54PaymentFactory {
 		return ba;
 	}
 
+	
+	private boolean isOCRReference(StructuredRemittanceInformation7 sri) {
+		if (sri==null) return false;
+		if (sri.getCdtrRefInf()==null) return false;
+		if (sri.getCdtrRefInf().getTp()==null) return false;
+		if (sri.getCdtrRefInf().getTp().getCdOrPrtry()==null) return false;
+		if (sri.getCdtrRefInf().getTp().getCdOrPrtry().getCd()==null) return false;
+		if (sri.getCdtrRefInf().getTp().getCdOrPrtry().getCd().name()==null) return false;
+		return ("SCOR".equals(sri.getCdtrRefInf().getTp().getCdOrPrtry().getCd().name()));
+	}
+	
 	
 }
