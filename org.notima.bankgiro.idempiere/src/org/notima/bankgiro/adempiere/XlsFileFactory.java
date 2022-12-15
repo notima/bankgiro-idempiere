@@ -19,7 +19,10 @@ import org.apache.poi.hssf.usermodel.HSSFRichTextString;
 import org.apache.poi.hssf.usermodel.HSSFRow;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
-import org.apache.poi.hssf.util.HSSFColor;
+import org.apache.poi.hssf.util.HSSFColor.HSSFColorPredefined;
+import org.apache.poi.ss.usermodel.CellType;
+import org.apache.poi.ss.usermodel.FillPatternType;
+import org.apache.poi.ss.usermodel.HorizontalAlignment;
 import org.compiere.model.MBankAccount;
 import org.compiere.model.MInvoice;
 import org.compiere.util.Env;
@@ -155,12 +158,11 @@ public class XlsFileFactory implements PaymentFileFactory {
         // Header style
         HSSFCellStyle headerStyle = wb.createCellStyle();
         HSSFFont font = wb.createFont();
-        font.setBoldweight(HSSFFont.BOLDWEIGHT_BOLD);
-        org.apache.poi.hssf.util.HSSFColor yellow = new HSSFColor.YELLOW();
-        headerStyle.setFillForegroundColor(yellow.getIndex());
-        headerStyle.setFillPattern(HSSFCellStyle.SOLID_FOREGROUND);
+        font.setBold(true);
+        headerStyle.setFillForegroundColor(HSSFColorPredefined.YELLOW.getIndex());
+        headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
         headerStyle.setFont(font);
-        headerStyle.setAlignment(HSSFCellStyle.ALIGN_CENTER);
+        headerStyle.setAlignment(HorizontalAlignment.CENTER);
         headerStyle.setWrapText(true);
         
         // Amount style
@@ -190,7 +192,7 @@ public class XlsFileFactory implements PaymentFileFactory {
             xrow = sheet.createRow(rowNo++);
             // Write payment info
             cellNo = 0;
-            cell = xrow.createCell(cellNo++, HSSFCell.CELL_TYPE_STRING);
+            cell = xrow.createCell(cellNo++, CellType.STRING);
             cell.setCellValue(new HSSFRichTextString(row.getBpartner().getName()));
             
             cell = xrow.createCell(cellNo++);
@@ -207,7 +209,7 @@ public class XlsFileFactory implements PaymentFileFactory {
             cell = xrow.createCell(cellNo++);
             cell.setCellValue(new HSSFRichTextString(row.dstAcct));
 
-            cell = xrow.createCell(cellNo++, HSSFCell.CELL_TYPE_BLANK);
+            cell = xrow.createCell(cellNo++, CellType.BLANK);
             cell.setCellValue(new java.util.Date(row.getInvoice().getDateInvoiced().getTime()));
             cell.setCellStyle(dateStyle);
             
