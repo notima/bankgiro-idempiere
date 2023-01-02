@@ -161,6 +161,9 @@ public class CAMT54PaymentFactory {
 
 		// Get book date
 		dte = e.getBookgDt();
+		if (dte==null) {
+			dte = e.getValDt();
+		}
 
 		// Get entry details
 		List<EntryDetails1> lst = e.getNtryDtls();
@@ -207,8 +210,8 @@ public class CAMT54PaymentFactory {
 		TransactionReferences2 tr2 = ee.getRefs();
 
 		// Get our invoice no
-		String ourRef = tr2.getEndToEndId();
-		ProprietaryReference1 theirRef1 = tr2.getPrtry();
+		String ourRef = tr2!=null ? tr2.getEndToEndId() : null;
+		ProprietaryReference1 theirRef1 = tr2!=null ? tr2.getPrtry() : null;
 		if (theirRef1!=null) {
 			String theirRef = theirRef1.getRef();
 			rec.setBpInvoiceNo(theirRef);
@@ -288,20 +291,22 @@ public class CAMT54PaymentFactory {
 		}
 
 		CashAccount16 rcptAcct = trp.getCdtrAcct();
-		AccountIdentification4Choice acctId = rcptAcct
-				.getId();
-		String rcptAcctStr;
-		String iban = acctId.getIBAN();
-		if (iban == null) {
-
-			GenericAccountIdentification1 ai = acctId
-					.getOthr();
-			rcptAcctStr = ai.getId();
-
-		} else {
-			rcptAcctStr = iban;
+		if (rcptAcct!=null) {
+			AccountIdentification4Choice acctId = rcptAcct
+					.getId();
+			String rcptAcctStr;
+			String iban = acctId.getIBAN();
+			if (iban == null) {
+	
+				GenericAccountIdentification1 ai = acctId
+						.getOthr();
+				rcptAcctStr = ai.getId();
+	
+			} else {
+				rcptAcctStr = iban;
+			}
+			rec.setBankAccount(rcptAcctStr);
 		}
-		rec.setBankAccount(rcptAcctStr);
 
 		boolean arCreditMemo = false;
 		// Check document type

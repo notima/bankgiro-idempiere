@@ -16,6 +16,7 @@ import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
+import javax.swing.filechooser.FileFilter;
 
 import org.adempiere.base.Service;
 import org.adempiere.report.jasper.JRViewerProvider;
@@ -158,6 +159,21 @@ public class Iso20022PaymentPlugin extends PaymentPlugin {
     		fc = new JFileChooser();
     	}
         // Select file to open
+    	
+    	if (receivablesOnly) {
+	    	fc.setFileFilter(new FileFilter() {
+	
+				@Override
+				public boolean accept(File f) {
+					return (f.getName().toLowerCase().contains("kred"));
+				}
+	
+				@Override
+				public String getDescription() {
+					return "Inbetalningar";
+				}});
+    	}
+    	
         int retVal = fc.showDialog(m_frame, "Select file");
         if (retVal==JFileChooser.APPROVE_OPTION) {
             File reportFile = fc.getSelectedFile();
