@@ -224,11 +224,11 @@ public class CAMT54PaymentFactory {
 				// TODO: Allow for handling of more than one invoice in remittance list.
 				for (StructuredRemittanceInformation7 r : remittanceList) {
 					if (isOCRReference(r)) {
-						rec.setPaymentReference(r.getCdtrRefInf().getRef());
+						rec.setPaymentReference(Iso20022Helper.getMostLikelyReference(r));
 						rec.setInvoiceNo(rec.getPaymentReference().substring(0, rec.getPaymentReference().length()-1));
 						break;
 					} else {
-						rec.setInvoiceNo(r.getCdtrRefInf().getRef());
+						rec.setInvoiceNo(Iso20022Helper.getMostLikelyReference(r));
 						break;
 					}
 				}
@@ -238,7 +238,6 @@ public class CAMT54PaymentFactory {
 		}
 		
 	}
-	
 	
 	
 	private void processEntryTransaction(EntryTransaction2 ee) {
