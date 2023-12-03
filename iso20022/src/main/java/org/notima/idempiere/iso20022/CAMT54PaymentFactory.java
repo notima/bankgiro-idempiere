@@ -19,8 +19,8 @@ import org.compiere.model.MDocType;
 import org.compiere.model.MInvoice;
 import org.compiere.model.MPayment;
 import org.compiere.model.Query;
+import org.compiere.util.CLogger;
 import org.compiere.util.Env;
-import org.jfree.util.Log;
 import org.notima.bankgiro.adempiere.PaymentExtendedRecord;
 import org.notima.bankgiro.adempiere.PluginRegistry;
 import org.notima.bankgiro.adempiere.model.MLBSettings;
@@ -49,6 +49,9 @@ import iso.std.iso._20022.tech.xsd.camt_054_001.TransactionParty2;
 import iso.std.iso._20022.tech.xsd.camt_054_001.TransactionReferences2;
 
 public class CAMT54PaymentFactory {
+	
+	private CLogger logger = CLogger.getCLogger(this.getClass());
+	
 	
 	private Iso20022PaymentFactory				paymentFactory;
 	private List<PaymentExtendedRecord> result = new ArrayList<PaymentExtendedRecord>();
@@ -142,7 +145,7 @@ public class CAMT54PaymentFactory {
 				try {
 					processReportEntry(e);
 				} catch (Exception ee) {
-					Log.warn("Can't process entry " + entryCount + " : " + ee.getMessage());
+					logger.warning("Can't process entry " + entryCount + " : " + ee.getMessage());
 					ee.printStackTrace();
 				}
 				
@@ -265,7 +268,7 @@ public class CAMT54PaymentFactory {
 			rec.setBPartner(new MBPartner(Env.getCtx(),
 					invoice.getC_BPartner_ID(), trxName));
 		} else {
-			Log.warn("Can't match invoice " + rec.getInvoiceNo());
+			logger.warning("Can't match invoice " + rec.getInvoiceNo());
 		}
 
 		setAmountFromTransaction(rec, ee);		
@@ -321,7 +324,7 @@ public class CAMT54PaymentFactory {
 
 				rec.setAdempierePayment(pmt);
 			} catch (AdempiereException ae) {
-				Log.warn(ae.getMessage() + " invoice " + invoice.getDocumentNo());
+				logger.warning(ae.getMessage() + " invoice " + invoice.getDocumentNo());
 				rec.setInvoice(invoice);
 			}
 		} else {

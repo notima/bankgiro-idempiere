@@ -19,8 +19,8 @@ import org.compiere.model.MDocType;
 import org.compiere.model.MInvoice;
 import org.compiere.model.MPayment;
 import org.compiere.model.Query;
+import org.compiere.util.CLogger;
 import org.compiere.util.Env;
-import org.jfree.util.Log;
 import org.notima.bankgiro.adempiere.PaymentExtendedRecord;
 import org.notima.bankgiro.adempiere.PluginRegistry;
 import org.notima.bankgiro.adempiere.model.MLBSettings;
@@ -52,15 +52,16 @@ import org.notima.idempiere.iso20022.entity.camt.TransactionReferences2;
 
 public class CAMT53PaymentFactory {
 
+	private CLogger logger = CLogger.getCLogger(this.getClass());
 	
-	private Iso20022PaymentFactory				paymentFactory;
+	private Iso20022PaymentFactory paymentFactory;
 	private List<PaymentExtendedRecord> result = new ArrayList<PaymentExtendedRecord>();
 	boolean receivablesOnly = false;
 	private SortedMap<String, MLBSettings> lbSettings;
 	private MLBSettings msgPrefix;
-	private String	msgPrefixStr;
+	private String msgPrefixStr;
 	private DocumentCAMT53 document = new DocumentCAMT53();
-	
+
 	private File f;
 
 	public CAMT53PaymentFactory(Iso20022PaymentFactory pf) {
@@ -75,24 +76,19 @@ public class CAMT53PaymentFactory {
 	public boolean initFileReading() throws Exception {
 
 		f = paymentFactory.getFile();
-		
+
 		paymentFactory.getLogger().fine("Reading file " + f.getAbsolutePath());
-		
 
 		// Get message id prefix
-		lbSettings = PluginRegistry.registry
-				.getLbSettings();
-		msgPrefix = lbSettings
-				.get(Iso20022FileFactory.ISO20022_MSGPREFIX);
+		lbSettings = PluginRegistry.registry.getLbSettings();
+		msgPrefix = lbSettings.get(Iso20022FileFactory.ISO20022_MSGPREFIX);
 		if (msgPrefix == null)
-			throw new Exception(
-					"No ISO Message prefix configured. Check LB-settings");
+			throw new Exception("No ISO Message prefix configured. Check LB-settings");
 		msgPrefixStr = msgPrefix.getName();
 
 		// Correct for Handelsbanken sending files in non UTF-8 format
 		Charset cs = Charset.forName("ISO-8859-15");
-		InputStreamReader reader = new InputStreamReader(
-				new FileInputStream(f), cs);
+		InputStreamReader reader = new InputStreamReader(new FileInputStream(f), cs);
 
 		try {
 			JAXBContext contextObj = JAXBContext.newInstance(DocumentCAMT53.class);
@@ -102,17 +98,16 @@ public class CAMT53PaymentFactory {
 		} catch (javax.xml.bind.UnmarshalException eu) {
 			reader.close();
 			return false;
-		} 
-		
+		}
+
 		return true;
-		
+
 	}
-	
-	
-	public List<PaymentExtendedRecord> getSourcePayments(Properties props)
-			throws Exception {
-		
-		if (props!=null && props.containsKey(Iso20022PaymentFactory.PROP_RECEIVABLES_ONLY) && props.get(Iso20022PaymentFactory.PROP_RECEIVABLES_ONLY)!=null) {
+
+	public List<PaymentExtendedRecord> getSourcePayments(Properties props) throws Exception {
+
+		if (props != null && props.containsKey(Iso20022PaymentFactory.PROP_RECEIVABLES_ONLY)
+				&& props.get(Iso20022PaymentFactory.PROP_RECEIVABLES_ONLY) != null) {
 			receivablesOnly = true;
 		}
 
@@ -161,133 +156,119 @@ public class CAMT53PaymentFactory {
 
 						// Reset finnish C.O.D.
 						finnishCod = false;
-						
+
 						List<EntryTransaction2> entList = det.getTxDtls();
 
 						for (EntryTransaction2 ee : entList) {
 
 							// Get related parties (debtor)
 							TransactionParty2 parties = ee.getRltdPties();
-							if (parties!=null) {
+							if (parties != null) {
 								PartyIdentification32 dbtr = parties.getDbtr();
-								if (dbtr!=null && "MATKAHUOLTO OY AB".equals(dbtr.getNm())) {
+								if (dbtr != null && "MATKAHUOLTO OY AB".equals(dbtr.getNm())) {
 									// Finnish Cash-On-Delivery
 									finnishCod = true;
 								}
 							}
-							
+
 							RemittanceInformation5 rmtInf = ee.getRmtInf();
-							if (rmtInf!=null) {
-								List<StructuredRemittanceInformation7> rmtInfList = rmtInf
-										.getStrd();
+							if (rmtInf != null) {
+								List<StructuredRemittanceInformation7> rmtInfList = rmtInf.getStrd();
 								// Get remittance information (information about
 								// incoming payments)
 								for (StructuredRemittanceInformation7 rr : rmtInfList) {
-	
+
 									rec = new PaymentExtendedRecord();
 									rec.setBankAccountPtr(ba);
-									
-									CreditorReferenceInformation2 reference = rr
-											.getCdtrRefInf();
+
+									CreditorReferenceInformation2 reference = rr.getCdtrRefInf();
 									ourRef = reference.getRef();
-	
+
 									RemittanceAmount1 ramt = rr.getRfrdDocAmt();
-									if (ramt!=null) {
+									if (ramt != null) {
 										amt = ramt.getRmtdAmt();
 									} else {
 										amt = ee.getAmtDtls().getTxAmt().getAmt();
 									}
-	
+
 									// Remove last digit since its a KID
-									ourRef = ourRef.substring(0, ourRef.length()-1);
+									ourRef = ourRef.substring(0, ourRef.length() - 1);
 									if (finnishCod) {
 										// Remove prefixing zeroes
 										ourRef = BgUtil.trimLeadingZeros(ourRef);
 									}
-	
+
 									rec.setPaymentReference(ourRef);
 									rec.setCurrency(amt.getCcy());
 									rec.setOrderSum(amt.getValue().doubleValue());
-									rec.setTrxDate(dte.getDt().toGregorianCalendar()
-										.getTime());
-	
-									
+									rec.setTrxDate(dte.getDt().toGregorianCalendar().getTime());
+
 									// Check invoice
-									MInvoice invoice = new Query(
-											Env.getCtx(),
-											MInvoice.Table_Name,
-											"AD_Client_ID=? AND DocumentNo=? AND IsSOTrx='Y'",
-											trxName).setParameters(
-											new Object[] {
-													Env.getAD_Client_ID(Env.getCtx()),
-													ourRef }).firstOnly();
-	
+									MInvoice invoice = new Query(Env.getCtx(), MInvoice.Table_Name,
+											"AD_Client_ID=? AND DocumentNo=? AND IsSOTrx='Y'", trxName)
+											.setParameters(new Object[] { Env.getAD_Client_ID(Env.getCtx()), ourRef })
+											.firstOnly();
+
 									if (invoice != null) {
 										rec.setInvoice(invoice);
 										rec.setInvoiceNo(ourRef);
-										rec.setBPartner(new MBPartner(Env.getCtx(),
-												invoice.getC_BPartner_ID(), trxName));
-										
+										rec.setBPartner(
+												new MBPartner(Env.getCtx(), invoice.getC_BPartner_ID(), trxName));
+
 										result.add(rec);
-										
+
 									} else {
-										Log.warn("Can't match invoice " + ourRef);
+										logger.warning("Can't match invoice " + ourRef);
 									}
-									
+
 									// If no payment is created here, it's created later
-									// createPayment(ba, invoice, rec.getTrxDate(), true, rec.getOrderSum(), amt.getCcy(), trxName);
+									// createPayment(ba, invoice, rec.getTrxDate(), true, rec.getOrderSum(),
+									// amt.getCcy(), trxName);
 								} // End of structured information
-	
+
 								// Check unstructured information
 								List<String> references = rmtInf.getUstrd();
-								
-								if ((rmtInfList==null || rmtInfList.isEmpty()) && (references!=null && !references.isEmpty())) {
-									
+
+								if ((rmtInfList == null || rmtInfList.isEmpty())
+										&& (references != null && !references.isEmpty())) {
+
 									rec = new PaymentExtendedRecord();
 									rec.setBankAccountPtr(ba);
-									
-									if (ee.getAmtDtls()!=null) {
+
+									if (ee.getAmtDtls() != null) {
 										amt = ee.getAmtDtls().getTxAmt().getAmt();
 									} else {
 										amt = e.getAmt();
 									}
-	
+
 									// Take first
 									ourRef = references.get(0).trim();
-									
+
 									rec.setPaymentReference(ourRef);
 									rec.setCurrency(amt.getCcy());
 									rec.setOrderSum(amt.getValue().doubleValue());
-									rec.setTrxDate(dte.getDt().toGregorianCalendar()
-										.getTime());
-	
-									
+									rec.setTrxDate(dte.getDt().toGregorianCalendar().getTime());
+
 									// Check invoice
-									MInvoice invoice = new Query(
-											Env.getCtx(),
-											MInvoice.Table_Name,
-											"AD_Client_ID=? AND DocumentNo=? AND IsSOTrx='Y'",
-											trxName).setParameters(
-											new Object[] {
-													Env.getAD_Client_ID(Env.getCtx()),
-													ourRef }).setOrderBy("dateacct desc").firstOnly();
-	
+									MInvoice invoice = new Query(Env.getCtx(), MInvoice.Table_Name,
+											"AD_Client_ID=? AND DocumentNo=? AND IsSOTrx='Y'", trxName)
+											.setParameters(new Object[] { Env.getAD_Client_ID(Env.getCtx()), ourRef })
+											.setOrderBy("dateacct desc").firstOnly();
+
 									if (invoice != null) {
 										rec.setInvoice(invoice);
 										rec.setInvoiceNo(ourRef);
-										rec.setBPartner(new MBPartner(Env.getCtx(),
-												invoice.getC_BPartner_ID(), trxName));
-										
+										rec.setBPartner(
+												new MBPartner(Env.getCtx(), invoice.getC_BPartner_ID(), trxName));
+
 										result.add(rec);
-										
+
 									} else {
-										Log.warn("Can't match invoice " + ourRef);
+										logger.warning("Can't match invoice " + ourRef);
 									}
-									
-									
-									
+
 								}
-								
+
 							} // End of remittance information !=null
 						} // End of transaction loop
 
@@ -305,12 +286,11 @@ public class CAMT53PaymentFactory {
 
 							rec = new PaymentExtendedRecord();
 							rec.setBankAccountPtr(ba);
-							
+
 							TransactionReferences2 tr2 = ee.getRefs();
 							// Make sure we have initiated this transaction
 							String msgId = tr2.getMsgId();
-							if (msgId == null
-									|| !msgId.startsWith(msgPrefixStr)) {
+							if (msgId == null || !msgId.startsWith(msgPrefixStr)) {
 								// Not a transaction initiated by us
 								continue;
 							}
@@ -322,35 +302,26 @@ public class CAMT53PaymentFactory {
 							rec.setBpInvoiceNo(theirRef);
 
 							// Check invoice
-							MInvoice invoice = new Query(
-									Env.getCtx(),
-									MInvoice.Table_Name,
-									"AD_Client_ID=? AND DocumentNo=? AND PaymentRule='Z'",
-									trxName).setParameters(
-									new Object[] {
-											Env.getAD_Client_ID(Env.getCtx()),
-											ourRef }).firstOnly();
+							MInvoice invoice = new Query(Env.getCtx(), MInvoice.Table_Name,
+									"AD_Client_ID=? AND DocumentNo=? AND PaymentRule='Z'", trxName)
+									.setParameters(new Object[] { Env.getAD_Client_ID(Env.getCtx()), ourRef })
+									.firstOnly();
 
 							if (invoice != null) {
 								rec.setInvoice(invoice);
-								rec.setBPartner(new MBPartner(Env.getCtx(),
-										invoice.getC_BPartner_ID(), trxName));
+								rec.setBPartner(new MBPartner(Env.getCtx(), invoice.getC_BPartner_ID(), trxName));
 							} else {
-								throw new Exception("Can't match invoice "
-										+ ourRef);
+								throw new Exception("Can't match invoice " + ourRef);
 							}
 
 							AmountAndCurrencyExchange3 aace = ee.getAmtDtls();
-							AmountAndCurrencyExchangeDetails3 aaced = aace
-									.getTxAmt();
-							ActiveOrHistoricCurrencyAndAmount amount = aaced
-									.getAmt();
+							AmountAndCurrencyExchangeDetails3 aaced = aace.getTxAmt();
+							ActiveOrHistoricCurrencyAndAmount amount = aaced.getAmt();
 
 							rec.setInvoiceNo(ourRef);
 							rec.setCurrency(amount.getCcy());
 							rec.setOrderSum(amount.getValue().doubleValue());
-							rec.setTrxDate(dte.getDt().toGregorianCalendar()
-									.getTime());
+							rec.setTrxDate(dte.getDt().toGregorianCalendar().getTime());
 							// The last trx date will be trx date for the whole
 							// file.
 							paymentFactory.setTrxDate(rec.getTrxDate());
@@ -360,14 +331,12 @@ public class CAMT53PaymentFactory {
 							rec.setName(pid.getNm());
 
 							CashAccount16 rcptAcct = trp.getCdtrAcct();
-							AccountIdentification4Choice acctId = rcptAcct
-									.getId();
+							AccountIdentification4Choice acctId = rcptAcct.getId();
 							String rcptAcctStr;
 							String iban = acctId.getIBAN();
 							if (iban == null) {
 
-								GenericAccountIdentification1 ai = acctId
-										.getOthr();
+								GenericAccountIdentification1 ai = acctId.getOthr();
 								rcptAcctStr = ai.getId();
 
 							} else {
@@ -379,9 +348,7 @@ public class CAMT53PaymentFactory {
 							// Check document type
 							if (invoice != null) {
 								arCreditMemo = MDocType.DOCBASETYPE_ARCreditMemo
-										.equalsIgnoreCase(invoice
-												.getC_DocType()
-												.getDocBaseType());
+										.equalsIgnoreCase(invoice.getC_DocType().getDocBaseType());
 								if (arCreditMemo) {
 									rec.setOrderSum(-rec.getOrderSum());
 								}
@@ -390,14 +357,12 @@ public class CAMT53PaymentFactory {
 							// Create payment
 							if (!arCreditMemo) {
 								try {
-									MPayment pmt = paymentFactory.createPayment(ba, invoice,
-											rec.getTrxDate(), false, amount
-													.getValue().doubleValue(),
-											amount.getCcy(), trxName);
-		
+									MPayment pmt = paymentFactory.createPayment(ba, invoice, rec.getTrxDate(), false,
+											amount.getValue().doubleValue(), amount.getCcy(), trxName);
+
 									rec.setAdempierePayment(pmt);
 								} catch (AdempiereException ae) {
-									Log.warn(ae.getMessage() + " invoice " + invoice.getDocumentNo());
+									logger.warning(ae.getMessage() + " invoice " + invoice.getDocumentNo());
 									rec.setInvoice(invoice);
 								}
 							} else {
@@ -432,10 +397,8 @@ public class CAMT53PaymentFactory {
 		String id = null;
 		// Check for iban match
 		if (iban != null) {
-			ba = new Query(Env.getCtx(), MBankAccount.Table_Name,
-					"IBAN=? AND AD_Client_ID=?", null).setParameters(
-					new Object[] { iban, Env.getAD_Client_ID(Env.getCtx()) })
-					.first();
+			ba = new Query(Env.getCtx(), MBankAccount.Table_Name, "IBAN=? AND AD_Client_ID=?", null)
+					.setParameters(new Object[] { iban, Env.getAD_Client_ID(Env.getCtx()) }).first();
 		}
 
 		if (ba == null) {
@@ -445,23 +408,17 @@ public class CAMT53PaymentFactory {
 			String schemeName = asc.getCd();
 
 			if ("BBAN".equalsIgnoreCase(schemeName)) {
-				ba = new Query(
-						Env.getCtx(),
-						MBankAccount.Table_Name,
-						"translate(concat(bban, accountno), '-., ','')=? AND AD_Client_ID=?",
-						null).setParameters(
-						new Object[] { id, Env.getAD_Client_ID(Env.getCtx()) })
-						.first();
+				ba = new Query(Env.getCtx(), MBankAccount.Table_Name,
+						"translate(concat(bban, accountno), '-., ','')=? AND AD_Client_ID=?", null)
+						.setParameters(new Object[] { id, Env.getAD_Client_ID(Env.getCtx()) }).first();
 			}
 
 		}
 
 		if (ba == null) {
-			throw new Exception(
-					"Can't find account " + iban != null ? ("IBAN: " + iban)
-							: ("BBAN: " + id));
+			throw new Exception("Can't find account " + iban != null ? ("IBAN: " + iban) : ("BBAN: " + id));
 		}
 		return ba;
 	}
-	
+
 }

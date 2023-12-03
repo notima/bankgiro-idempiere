@@ -10,7 +10,8 @@ public class BankAccountUtil {
 		PLUSGIRO,
 		DOMESTIC_BANKACCT,
 		IBAN,
-		NONE
+		SEPA,
+		NONE		
 	}
 	
 	private MBPBankAccount	bpacct;
