@@ -13,10 +13,7 @@
         </parent>
         <modules>
 		<module>iso20022</module>
-        <module>iso20022-swing</module>
         <module>bankgiro-idempiere</module>
-        <module>bankgiro-idempiere.zk</module>
-        <module>bankgiro-idempiere.swing</module>
 		<module>idempiere-banking.p2</module>
 	</modules>
 </project>
