@@ -11,7 +11,7 @@
   
    <dependencies>
 		<dependency>
-			<groupId>org.notima</groupId>
+			<groupId>se.notima.idempiere</groupId>
 		    <artifactId>bankgiro-idempiere</artifactId>
 		    <version>0.1.0-SNAPSHOT</version>
 		</dependency>

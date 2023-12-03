@@ -7,12 +7,11 @@
 		<relativePath>../idempiere-banking.parent/pom.xml</relativePath>
  </parent>
   <artifactId>iso20022-swing</artifactId>
-  <version>0.1.0-SNAPSHOT</version>
   <name>iso20022-swing</name>
   
    <dependencies>
 		<dependency>
-			<groupId>org.notima.idempiere</groupId>
+			<groupId>se.notima.idempiere</groupId>
 		    <artifactId>iso20022</artifactId>
 		    <version>0.1.0-SNAPSHOT</version>
 		</dependency>

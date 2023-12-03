@@ -7,12 +7,11 @@
 		<relativePath>../idempiere-banking.parent/pom.xml</relativePath>
  </parent>
   <artifactId>bankgiro-idempiere.swing</artifactId>
-  <version>0.1.0-SNAPSHOT</version>
   <name>bankgiro-idempiere.swing</name>
 
     <dependencies>
 		<dependency>
-			<groupId>org.notima</groupId>
+			<groupId>se.notima.idempiere</groupId>
 		    <artifactId>bankgiro-idempiere</artifactId>
 		    <version>0.1.0-SNAPSHOT</version>
 		</dependency>
