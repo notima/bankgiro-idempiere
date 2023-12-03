@@ -264,7 +264,7 @@ public class BgPaymentPlugin extends PaymentPlugin {
 				String destFileName = reportDir + File.separator + "BG" + dateFormat.format(fileDate) + ".pdf";
 				net.sf.jasperreports.engine.JasperExportManager.exportReportToPdfFile(print, destFileName);
 			} else {
-				org.compiere.report.JasperViewer.viewReport(print);
+				org.compiere.report.JasperViewer.viewReport(print, null);
 			}
 		} catch (Exception jre) {
 			JOptionPane.showMessageDialog(null, jre.getMessage());

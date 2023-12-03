@@ -15,4 +15,5 @@ Require-Bundle: org.adempiere.base;bundle-version="3.1.0",
  org.adempiere.plugin.utils;bundle-version="0.0.0",
  org.adempiere.ui;bundle-version="3.1.0",
  org.adempiere.ui.swing;bundle-version="3.1.0",
- iso20022;bundle-version="1.0.0"
+ iso20022;bundle-version="1.0.0",
+ net.sf.jasperreports.engine;bundle-version="6.17.0"
