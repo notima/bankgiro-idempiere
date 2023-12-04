@@ -9,14 +9,6 @@
   <artifactId>bankgiro-idempiere.zk</artifactId>
   <name>bankgiro-idempiere.zk</name>
   
-  <dependencies>
-		<dependency>
-			<groupId>se.notima.idempiere</groupId>
-		    <artifactId>bankgiro-idempiere</artifactId>
-		    <version>0.1.0-SNAPSHOT</version>
-		</dependency>
-  </dependencies>
-  
   <build>
     <sourceDirectory>src</sourceDirectory>
     <plugins>

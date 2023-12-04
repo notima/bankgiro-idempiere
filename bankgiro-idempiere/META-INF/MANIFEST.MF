@@ -4,7 +4,7 @@ Bundle-Name: Bankgiro iDempiere
 Bundle-SymbolicName: org.notima.bankgiro.idempiere;singleton:=true
 Bundle-Version: 2.0.0
 Bundle-ClassPath: target/classes/,
- lib/bankgiro-api-1.3.4.jar
+ lib/bankgiro-api-1.3.7.jar
 Bundle-Activator: org.notima.bankgiro.adempiere.Activator
 Require-Bundle: org.adempiere.base;bundle-version="0.0.0",
  org.adempiere.base.callout,
@@ -24,4 +24,9 @@ Bundle-RequiredExecutionEnvironment: JavaSE-11
 Export-Package: org.notima.bankgiro.adempiere,
  org.notima.bankgiro.adempiere.callout,
  org.notima.bankgiro.adempiere.model,
- org.notima.bankgiro.adempiere.process
+ org.notima.bankgiro.adempiere.process,
+ org.notima.bg,
+ org.notima.bg.bgmax,
+ org.notima.bg.lb,
+ org.notima.tilisiirto,
+ se.notima.bg

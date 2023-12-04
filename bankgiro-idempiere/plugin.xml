@@ -41,11 +41,11 @@
    </extension>
    
    <extension
-         id="org.notima.bankgiro.adempiere.process.SetupBankgiroIDempiere"
-         name="SetupBankgiroIDempiere"
+         id="org.notima.bankgiro.adempiere.process.ProcessFilesForBankAccount"
+         name="ProcessFilesForBankAccount"
          point="org.adempiere.base.Process">
          <process
-         	class="org.notima.bankgiro.adempiere.process.SetupBankgiroIDempiere">
+         	class="org.notima.bankgiro.adempiere.process.ProcessFilesForBankAccount">
          </process>
    </extension>
    
