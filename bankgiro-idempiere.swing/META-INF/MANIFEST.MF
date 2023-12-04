@@ -6,8 +6,9 @@ Bundle-Version: 1.0.0.qualifier
 Export-Package: org.notima.bankgiro.adempiere.form,
  org.notima.bankgiro.idempiere.ui.swing
 Require-Bundle: org.adempiere.base;bundle-version="3.1.0",
- org.notima.bankgiro.idempiere;bundle-version="2.0.0",
  org.adempiere.ui;bundle-version="3.1.0",
+ org.adempiere.ui.swing;bundle-version="10.0.0",
+ org.notima.bankgiro.idempiere;bundle-version="2.0.0",
  net.sf.jasperreports.engine;bundle-version="6.17.0",
- org.adempiere.ui.swing;bundle-version="10.0.0"
+ org.adempiere.report.jasper.swing;bundle-version="10.0.0"
 Automatic-Module-Name: bankgiro.adempiere.swing
