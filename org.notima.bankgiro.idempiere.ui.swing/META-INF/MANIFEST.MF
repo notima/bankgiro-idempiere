@@ -1,7 +1,7 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: bankgiro-adempiere-swing
-Bundle-SymbolicName: bankgiro-adempiere-swing
+Bundle-SymbolicName: bankgiro-adempiere-swing;singleton:=true
 Bundle-Version: 1.0.0.qualifier
 Export-Package: org.notima.bankgiro.adempiere.form,
  org.notima.bankgiro.idempiere.ui.swing

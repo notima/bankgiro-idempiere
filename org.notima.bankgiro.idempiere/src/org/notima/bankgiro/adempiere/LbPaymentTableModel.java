@@ -151,7 +151,8 @@ public class LbPaymentTableModel extends AbstractTableModel {
           if (ts==null) ts = new java.sql.Timestamp(0);
           row.payDate = new java.sql.Timestamp(Math.max(Calendar.getInstance().getTimeInMillis(), ts.getTime()));
           // Set paystatus.
-          Integer ps = (Integer)row.getInvoice().get_Value("LbStatus");
+          String psStr = (String)row.getInvoice().get_Value("LbStatus");
+          Integer ps = psStr!=null ? Integer.parseInt(psStr) : null;
           if (row.getInvoice().isPaid()) {
               row.payStatus = LbPaymentRow.PAYSTATUS_PAID;    // Paid
           } else if (ps==null) {
@@ -194,8 +195,8 @@ public class LbPaymentTableModel extends AbstractTableModel {
             params.add(endDate);
         }
         switch(status) {
-            case 1: query.append(" AND IsPaid<>'Y' AND (LbStatus=0 or LbStatus is null)"); break;
-            case 2: query.append(" AND IsPaid<>'Y' AND LbStatus=1"); break;
+            case 1: query.append(" AND IsPaid<>'Y' AND (LbStatus='0' or LbStatus is null)"); break;
+            case 2: query.append(" AND IsPaid<>'Y' AND LbStatus='1'"); break;
             case 3: query.append(" AND IsPaid='Y'"); break;
         }
 
