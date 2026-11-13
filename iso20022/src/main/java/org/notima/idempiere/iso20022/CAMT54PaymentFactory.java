@@ -41,12 +41,8 @@ import iso.std.iso._20022.tech.xsd.camt_054_001.DocumentCAMT54;
 import iso.std.iso._20022.tech.xsd.camt_054_001.EntryDetails1;
 import iso.std.iso._20022.tech.xsd.camt_054_001.EntryTransaction2;
 import iso.std.iso._20022.tech.xsd.camt_054_001.GenericAccountIdentification1;
-import iso.std.iso._20022.tech.xsd.camt_054_001.PartyIdentification32;
-import iso.std.iso._20022.tech.xsd.camt_054_001.ProprietaryReference1;
 import iso.std.iso._20022.tech.xsd.camt_054_001.ReportEntry2;
-import iso.std.iso._20022.tech.xsd.camt_054_001.StructuredRemittanceInformation7;
 import iso.std.iso._20022.tech.xsd.camt_054_001.TransactionParty2;
-import iso.std.iso._20022.tech.xsd.camt_054_001.TransactionReferences2;
 
 public class CAMT54PaymentFactory {
 	
@@ -198,43 +194,26 @@ public class CAMT54PaymentFactory {
 	}
 	
 	/**
-	 * Sets the invoice reference in the PaymentExtendedRecord from EntryTransaction.
+	 * Sets the invoice reference and counterparty name in the PaymentExtendedRecord from EntryTransaction.
 	 * 
-	 * If OCR the paymentReferenceField is used, otherwise invoiceNo.
+	 * See CAMT54ReferenceResolver for the rules.
 	 * 
 	 * @param rec
 	 * @param ee
 	 */
-	private void setInvoiceReferenceFromTransaction(PaymentExtendedRecord rec, EntryTransaction2 ee) {
+	private void setInvoiceReferenceFromTransaction(PaymentExtendedRecord rec, EntryTransaction2 ee, LbPayment lbPayment) {
 		
-		TransactionReferences2 tr2 = ee.getRefs();
-
-		// Get our invoice no
-		String ourRef = tr2!=null ? tr2.getEndToEndId() : null;
-		ProprietaryReference1 theirRef1 = tr2!=null ? tr2.getPrtry() : null;
-		if (theirRef1!=null) {
-			String theirRef = theirRef1.getRef();
-			rec.setBpInvoiceNo(theirRef);
+		CAMT54ReferenceResolver.Result r = CAMT54ReferenceResolver.resolve(ee, crDbCode);
+		if (r.bpInvoiceNo!=null) {
+			rec.setBpInvoiceNo(r.bpInvoiceNo);
 		}
-		
-		if (ourRef==null) {
-			// Look in structured remittance information
-			if (ee.getRmtInf()!=null) {
-				List<StructuredRemittanceInformation7> remittanceList = ee.getRmtInf().getStrd();
-				// TODO: Allow for handling of more than one invoice in remittance list.
-				for (StructuredRemittanceInformation7 r : remittanceList) {
-					if (isOCRReference(r)) {
-						rec.setPaymentReference(Iso20022Helper.getMostLikelyReference(r));
-						rec.setInvoiceNo(rec.getPaymentReference().substring(0, rec.getPaymentReference().length()-1));
-						break;
-					} else {
-						rec.setInvoiceNo(Iso20022Helper.getMostLikelyReference(r));
-						break;
-					}
-				}
-			}
-		} else {
-			rec.setInvoiceNo(ourRef);
+		if (r.paymentReference!=null) {
+			rec.setPaymentReference(r.paymentReference);
+		}
+		rec.setInvoiceNo(r.invoiceNo);
+		if (r.counterpartyName!=null) {
+			rec.setName(r.counterpartyName);
+			lbPayment.setDstName(r.counterpartyName);
 		}
 		
 	}
@@ -242,25 +221,29 @@ public class CAMT54PaymentFactory {
 	
 	private void processEntryTransaction(EntryTransaction2 ee) {
 		
-		String ourRef;
-
 		// This record is used to comply with previous jasper reports.
 		LbPayment lbPayment = new LbPayment();
 		
 		PaymentExtendedRecord rec = new PaymentExtendedRecord();
 		rec.setBankAccountPtr(ba);
 		
-		setInvoiceReferenceFromTransaction(rec, ee);
+		setInvoiceReferenceFromTransaction(rec, ee, lbPayment);
 
-		// Check invoice
-		MInvoice invoice = new Query(
+		boolean incoming = CreditDebitCode.CRDT.equals(crDbCode);
+		
+		// Check invoice (customer invoice for incoming, vendor invoice for outgoing payments)
+		MInvoice invoice = null;
+		if (rec.getInvoiceNo()!=null) {
+			invoice = new Query(
 				Env.getCtx(),
 				MInvoice.Table_Name,
-				"AD_Client_ID=? AND DocumentNo=? AND IsSoTrx='Y'",
+				"AD_Client_ID=? AND DocumentNo=? AND IsSoTrx=?",
 				trxName).setParameters(
 				new Object[] {
 						Env.getAD_Client_ID(Env.getCtx()),
-						rec.getInvoiceNo() }).firstOnly();
+						rec.getInvoiceNo(),
+						incoming ? "Y" : "N" }).setOrderBy("DateAcct DESC").first();
+		}
 
 		if (invoice != null) {
 			rec.setInvoice(invoice);
@@ -283,13 +266,7 @@ public class CAMT54PaymentFactory {
 		paymentFactory.setTrxDate(rec.getTrxDate());
 
 		TransactionParty2 trp = ee.getRltdPties();
-		PartyIdentification32 pid = trp.getDbtr();
-		if (pid!=null) {
-			rec.setName(pid.getNm());
-			lbPayment.setDstName(pid.getNm());
-		}
-
-		CashAccount16 rcptAcct = trp.getCdtrAcct();
+		CashAccount16 rcptAcct = trp!=null ? trp.getCdtrAcct() : null;
 		if (rcptAcct!=null) {
 			AccountIdentification4Choice acctId = rcptAcct
 					.getId();
@@ -299,12 +276,13 @@ public class CAMT54PaymentFactory {
 	
 				GenericAccountIdentification1 ai = acctId
 						.getOthr();
-				rcptAcctStr = ai.getId();
+				rcptAcctStr = ai!=null ? ai.getId() : null;
 	
 			} else {
 				rcptAcctStr = iban;
 			}
-			rec.setBankAccount(rcptAcctStr);
+			if (rcptAcctStr!=null) 
+				rec.setBankAccount(rcptAcctStr);
 		}
 
 		boolean arCreditMemo = false;
@@ -325,7 +303,7 @@ public class CAMT54PaymentFactory {
 
 				rec.setAdempierePayment(pmt);
 			} catch (AdempiereException ae) {
-				Log.warn(ae.getMessage() + " invoice " + invoice.getDocumentNo());
+				Log.warn(ae.getMessage() + " invoice " + (invoice!=null ? invoice.getDocumentNo() : rec.getInvoiceNo()));
 				rec.setInvoice(invoice);
 			}
 		} else {
@@ -379,22 +357,13 @@ public class CAMT54PaymentFactory {
 
 		if (ba == null) {
 			throw new Exception(
-					"Can't find account " + iban != null ? ("IBAN: " + iban)
-							: ("BBAN: " + id));
+					"Can't find account " + (iban != null ? ("IBAN: " + iban)
+							: ("BBAN: " + id)));
 		}
 		return ba;
 	}
 
 	
-	private boolean isOCRReference(StructuredRemittanceInformation7 sri) {
-		if (sri==null) return false;
-		if (sri.getCdtrRefInf()==null) return false;
-		if (sri.getCdtrRefInf().getTp()==null) return false;
-		if (sri.getCdtrRefInf().getTp().getCdOrPrtry()==null) return false;
-		if (sri.getCdtrRefInf().getTp().getCdOrPrtry().getCd()==null) return false;
-		if (sri.getCdtrRefInf().getTp().getCdOrPrtry().getCd().name()==null) return false;
-		return ("SCOR".equals(sri.getCdtrRefInf().getTp().getCdOrPrtry().getCd().name()));
-	}
 	
 	
 }
